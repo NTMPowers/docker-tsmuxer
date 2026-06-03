@@ -1,7 +1,4 @@
 #!/bin/sh
-# NOTE: The $HOME variable is set only to have a default location when opening
-#       the file dialog window.
-export HOME=/storage
 
 # Added to avoid the following error message:
 #   MESA-LOADER: failed to open swrast: Error loading shared library
