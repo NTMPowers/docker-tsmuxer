@@ -1,7 +1,6 @@
 --- a/tsMuxer/blurayHelper.h
 +++ b/tsMuxer/blurayHelper.h
-@@ -27,8 +27,9 @@
-     bool createCLPIFile(TSMuxer* muxer, int clpiNum, bool doLog) const;
+@@ -29,6 +29,7 @@
      bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
                          const std::vector<double>& customChapters, DiskType dt, int mplsOffset,
                          bool isMvcBaseViewR) const;
@@ -11,16 +10,14 @@
      [[nodiscard]] std::string ssifFileName(int num) const;
 --- a/tsMuxer/blurayHelper.cpp
 +++ b/tsMuxer/blurayHelper.cpp
-@@ -3,6 +3,7 @@
+@@ -3,5 +3,6 @@
  #include <memory>
  
  #include <fs/directory.h>
 +#include <fs/file.h>
  #include <fs/systemlog.h>
  #include <array>
- 
-@@ -743,4 +744,59 @@
- 
+@@ -744,3 +745,57 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
@@ -80,18 +77,13 @@
 +}
 --- a/tsMuxer/main.cpp
 +++ b/tsMuxer/main.cpp
-@@ -46,8 +46,8 @@
-     }
+@@ -48,4 +48,4 @@
  DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
                          int& firstMplsOffset, int& firstM2tsOffset, bool& insertBlankPL, int& blankNum,
 -                        bool& stereoMode, std::string& isoDiskLabel)
 +                        bool& stereoMode, std::string& isoDiskLabel, std::string& metaDir)
  {
-     autoChapterLen = 0;
-     stereoMode = false;
-@@ -113,6 +113,12 @@
-                     if (paramPair.size() < 2)
-                         THROW(ERR_COMMON, "Missing value for " << paramPair[0])
+@@ -115,3 +115,8 @@
                      isoDiskLabel = paramPair[1];
                  }
 +                else if (paramPair[0] == "--meta-dir") {
@@ -100,23 +92,14 @@
 +                    metaDir = paramPair[1];
 +                }
              }
- 
-             if (str.find("--blu-ray-v3") != string::npos)
-@@ -2061,9 +2061,10 @@
-         int autoChapterLen = 0;
-         vector<double> customChapterList;
-         bool stereoMode = false;
+@@ -2064,4 +2064,5 @@
          string isoDiskLabel;
 +        string metaDir = "/iso/BDMV/META";
          DiskType dt = checkBluRayMux(argv[1], autoChapterLen, customChapterList, firstMplsOffset, firstM2tsOffset,
 -                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel);
 +                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel, metaDir);
          std::string fileExt2 = unquoteStr(fileExt);
-         bool mkvMode = fileExt2 == "MKV" || fileExt2 == "MKA";
-         bool muxMode =
-@@ -2165,6 +2166,7 @@
-             if (dt != DiskType::NONE)
-             {
+@@ -2168,3 +2168,4 @@
                  blurayHelper.writeBluRayFiles(muxerManager, insertBlankPL, firstMplsOffset, blankNum, stereoMode);
 +                blurayHelper.copyMetaDirectory(metaDir);
                  auto mainMuxer = dynamic_cast<TSMuxer*>(muxerManager.getMainMuxer());
