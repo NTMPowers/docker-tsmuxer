@@ -12,6 +12,9 @@ export LDFLAGS="-Wl,--strip-all -Wl,--as-needed"
 export CC=xx-clang
 export CXX=xx-clang++
 
+# Add Alpine Qt6 tool directories to PATH so CMake can find moc, uic, rcc, and lrelease
+export PATH="/usr/lib/qt6/bin:/usr/lib/qt6/libexec:$PATH"
+
 log() {
     echo ">>> $*"
 }
@@ -30,7 +33,7 @@ if [ -z "$TSMUXER_URL" ]; then
 fi
 
 #
-# Install required packages.
+# Install required packages (removed qtchooser, added Qt6 packages).
 #
 apk --no-cache add \
     curl \
@@ -41,9 +44,9 @@ apk --no-cache add \
     make \
     pkgconf \
     imagemagick \
-    qtchooser \
     qt6-qtbase-dev \
     qt6-qttools-dev \
+    qt6-qtmultimedia-dev
 
 xx-apk --no-cache --no-scripts add \
     musl-dev \
@@ -53,15 +56,15 @@ xx-apk --no-cache --no-scripts add \
     freetype-dev \
     qt6-qtbase-dev \
     qt6-qttools-dev \
-    qt6-qtmultimedia-dev \
+    qt6-qtmultimedia-dev
 
 # Make sure tools used to generate code are the ones from the host.
 if [ "$(xx-info sysroot)" != "/" ]
 then
-    ln -sf /usr/bin/moc $(xx-info sysroot)usr/lib/qt6/bin/moc
-    ln -sf /usr/bin/uic $(xx-info sysroot)usr/lib/qt6/bin/uic
-    ln -sf /usr/bin/rcc $(xx-info sysroot)usr/lib/qt6/bin/rcc
-    ln -sf /usr/bin/lrelease $(xx-info sysroot)usr/lib/qt6/bin/lrelease
+    ln -sf /usr/lib/qt6/libexec/moc $(xx-info sysroot)usr/lib/qt6/bin/moc 2>/dev/null || true
+    ln -sf /usr/lib/qt6/libexec/uic $(xx-info sysroot)usr/lib/qt6/bin/uic 2>/dev/null || true
+    ln -sf /usr/lib/qt6/libexec/rcc $(xx-info sysroot)usr/lib/qt6/bin/rcc 2>/dev/null || true
+    ln -sf /usr/lib/qt6/bin/lrelease $(xx-info sysroot)usr/lib/qt6/bin/lrelease 2>/dev/null || true
 fi
 
 #
