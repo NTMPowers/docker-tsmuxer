@@ -1,3 +1,45 @@
+# tsMuxeR Docker (teaching-droid fork with native ISO mount)
+
+> **Note**: This repository is a custom fork of [jlesage/docker-tsmuxer](https://github.com/jlesage/docker-tsmuxer) modified to use the active modern [teaching-droid/tsMuxer](https://github.com/teaching-droid/tsMuxer) fork and provide native ISO mounting via environment variables.
+
+---
+
+### What's Changed in This Fork
+
+1. **Modern tsMuxeR Upstream (`teaching-droid/tsMuxer`)**:
+   - Replaced the unmaintained `justdan96/tsMuxer` (v2.7.0) with the active **`teaching-droid/tsMuxer`** (v2.18.x).
+   - Compiles with C++20 and **Qt 6** GUI (utilizing Alpine 3.21 for Qt 6.8+ compatibility).
+
+2. **Native ISO Mounting via `ISO_NAME`**:
+   - Added an integrated container initialization script (`/etc/cont-init.d/50-mount-iso.sh`).
+   - Simply provide the filename in the `ISO_NAME` environment variable, and the container will automatically loop-mount `/storage/<your-file>.iso` to `/iso` at boot.
+   - If `ISO_NAME` is omitted or empty, the container boots normally without mounting.
+
+3. **Automated GitHub Container Registry (GHCR) Publishing**:
+   - Built and published directly via GitHub Actions to `ghcr.io`.
+
+---
+
+### Quick Start with Docker Compose
+
+```yaml
+services:
+  tsmuxer:
+    image: ghcr.io/ntmpowers/docker-tsmuxer:latest
+    container_name: tsmuxer
+    privileged: true # Required for loop mounting ISOs
+    environment:
+      # Specify any ISO filename located inside your /storage mount:
+      - ISO_NAME=movie.iso
+    ports:
+      - "5800:5800"
+    volumes:
+      - /path/to/config:/config:rw
+      - /path/to/movies:/storage:rw # Contains your ISO files
+    restart: unless-stopped
+```
+---
+
 # Docker container for tsMuxeR
 [![Release](https://img.shields.io/github/release/jlesage/docker-tsmuxer.svg?logo=github&style=for-the-badge)](https://github.com/jlesage/docker-tsmuxer/releases/latest)
 [![Docker Image Size](https://img.shields.io/docker/image-size/jlesage/tsmuxer/latest?logo=docker&style=for-the-badge)](https://hub.docker.com/r/jlesage/tsmuxer/tags)
