@@ -14,15 +14,20 @@ if [ -n "${ISO_NAME:-}" ]; then
         mount -t udf,iso9660 -o ro,loop "$ISO_PATH" /iso
         echo "Successfully mounted to /iso"
 
-        # --- Automatically add /iso to the file dialog sidebar bookmarks ---
-        BOOKMARK_DIRS="/config/.config/gtk-3.0 /config/xdg/config/gtk-3.0 /root/.config/gtk-3.0"
-        for DIR in $BOOKMARK_DIRS; do
-            mkdir -p "$DIR"
-            if ! grep -qs "file:///iso" "$DIR/bookmarks" 2>/dev/null; then
-                echo "file:///iso iso" >> "$DIR/bookmarks"
+        # Inject file:///iso into QtProject.conf shortcuts if not already present
+        CONF="/config/xdg/config/QtProject.conf"
+        mkdir -p "$(dirname "$CONF")"
+        if [ -f "$CONF" ]; then
+            if grep -q "shortcuts=" "$CONF"; then
+                if ! grep -q "file:///iso" "$CONF"; then
+                    sed -i 's|shortcuts=.*|&, file:///iso|' "$CONF"
+                fi
+            else
+                printf "\n[FileDialog]\nshortcuts=file:, file:///storage, file:///iso\n" >> "$CONF"
             fi
-        done
-        # ------------------------------------------------------------------
+        else
+            printf "[FileDialog]\nshortcuts=file:, file:///storage, file:///iso\n" > "$CONF"
+        fi
     else
         echo "WARNING: '$ISO_PATH' not found! Skipping mount." >&2
     fi
