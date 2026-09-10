@@ -33,7 +33,7 @@ if [ -z "$TSMUXER_URL" ]; then
 fi
 
 #
-# Install required packages (removed qtchooser, added Qt6 packages).
+# Install required packages.
 #
 apk --no-cache add \
     curl \
@@ -44,6 +44,7 @@ apk --no-cache add \
     make \
     pkgconf \
     imagemagick \
+    patch \
     qt6-qtbase-dev \
     qt6-qttools-dev \
     qt6-qtmultimedia-dev
@@ -74,6 +75,16 @@ fi
 log "Downloading tsMuxeR package..."
 mkdir /tmp/tsmuxer
 curl -# -L -f ${TSMUXER_URL} | tar xz --strip 1 -C /tmp/tsmuxer
+
+#
+# Apply custom patches.
+#
+if [ -f /build/retain-meta-folder.patch ]; then
+    log "Applying retain-meta-folder.patch..."
+    patch -p1 -d /tmp/tsmuxer < /build/retain-meta-folder.patch
+else
+    log "WARNING: retain-meta-folder.patch not found in /build, skipping patch."
+fi
 
 #
 # Compile tsMuxeR.
