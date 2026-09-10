@@ -1,0 +1,131 @@
+diff --git a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
+--- a/tsMuxer/blurayHelper.cpp
++++ b/tsMuxer/blurayHelper.cpp
+@@ -1,6 +1,7 @@
+ #include "blurayHelper.h"
+ 
+ #include <fs/directory.h>
++#include <fs/file.h>
+ #include <fs/systemlog.h>
+ #include <array>
+ 
+@@ -520,3 +521,49 @@ void BlurayHelper::setVolumeLabel(const std::string& label) const
+     if (m_isoWriter)
+         m_isoWriter->setVolumeLabel(unquoteStr(label));
+ }
++
++void BlurayHelper::copyMetaDirectory(const std::string& metaDir) const
++{
++    if (metaDir.empty() || !m_isoWriter)
++        return;
++
++    std::string dirPath = metaDir;
++    char sep = getDirSeparator();
++    if (!dirPath.empty() && dirPath.back() != sep && dirPath.back() != '/' && dirPath.back() != '\\') {
++        dirPath += sep;
++    }
++
++    std::vector<std::string> files;
++    if (!findFiles(dirPath, "*", &files, false))
++    {
++        LTRACE(LT_WARN, 2, "Warning: Could not read META directory: " << dirPath);
++        return;
++    }
++
++    for (const auto& fileName : files)
++    {
++        std::string filePath = dirPath + fileName;
++        File inFile;
++        if (!inFile.open(filePath.c_str(), File::ofRead))
++        {
++            LTRACE(LT_WARN, 2, "Warning: Could not open META file: " << filePath);
++            continue;
++        }
++
++        int64_t fileSize = inFile.size();
++        if (fileSize <= 0)
++        {
++            inFile.close();
++            continue;
++        }
++
++        auto buffer = new uint8_t[static_cast<size_t>(fileSize)];
++        if (inFile.read(buffer, static_cast<int32_t>(fileSize)) != fileSize)
++        {
++            LTRACE(LT_WARN, 2, "Warning: Could not read META file: " << filePath);
++            delete[] buffer;
++            inFile.close();
++            continue;
++        }
++        inFile.close();
++
++        std::string isoPath = "BDMV/META/" + fileName;
++        ISOFile* isoFile = m_isoWriter->createFile();
++        if (isoFile->open(isoPath.c_str(), File::ofWrite))
++        {
++            isoFile->write(buffer, static_cast<uint32_t>(fileSize));
++            isoFile->close();
++        }
++        else
++        {
++            LTRACE(LT_WARN, 2, "Warning: Could not create ISO file: " << isoPath);
++        }
++        delete isoFile;
++        delete[] buffer;
++    }
++}
+diff --git a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
+--- a/tsMuxer/blurayHelper.h
++++ b/tsMuxer/blurayHelper.h
+@@ -45,6 +45,7 @@ public:
+     bool createCLPIFile(TSMuxer* muxer, int clpiNum, bool doLog) const;
+     bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
+                         const std::vector<double>& customChapters, DiskType dt, int mplsOffset, bool isMvcBaseViewR) const;
++    void copyMetaDirectory(const std::string& metaDir) const;
+ 
+     std::string m2tsFileName(int num) const;
+     std::string ssifFileName(int num) const;
+diff --git a/tsMuxer/main.cpp b/tsMuxer/main.cpp
+--- a/tsMuxer/main.cpp
++++ b/tsMuxer/main.cpp
+@@ -49,8 +49,8 @@ SingleFileMuxerFactory singleFileMuxerFactory;
+         }                                \
+     }
+ DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
+-                        int& firstMplsOffset, int& firstM2tsOffset, bool& insertBlankPL, int& blankNum,
+-                        bool& stereoMode, std::string& isoDiskLabel)
++                        int& firstMplsOffset, int& firstM2tsOffset, bool& insertBlankPL, int& blankNum,
++                        bool& stereoMode, std::string& isoDiskLabel, std::string& metaDir)
+ {
+     autoChapterLen = 0;
+     stereoMode = false;
+@@ -84,6 +84,10 @@ DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<do
+                 else if (paramPair[0] == "--label")
+                 {
+                     isoDiskLabel = paramPair[1];
++                }
++                else if (paramPair[0] == "--meta-dir")
++                {
++                    metaDir = paramPair[1];
+                 }
+             }
+ 
+@@ -390,10 +394,11 @@ int main(int argc, char** argv)
+         int autoChapterLen = 0;
+         vector<double> customChapterList;
+         bool stereoMode = false;
+         string isoDiskLabel;
++        string metaDir;
+         DiskType dt = checkBluRayMux(argv[1], autoChapterLen, customChapterList, firstMplsOffset, firstM2tsOffset,
+-                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel);
++                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel, metaDir);
+         std::string fileExt2 = unquoteStr(fileExt);
+         bool muxMode =
+             fileExt2 == "M2TS" || fileExt2 == "TS" || fileExt2 == "SSIF" || fileExt2 == "ISO" || dt != DiskType::NONE;
+@@ -423,6 +428,7 @@ int main(int argc, char** argv)
+             if (dt != DiskType::NONE)
+             {
+                 blurayHelper.writeBluRayFiles(muxerManager, insertBlankPL, firstMplsOffset, blankNum, stereoMode);
++                blurayHelper.copyMetaDirectory(metaDir);
+                 auto mainMuxer = dynamic_cast<TSMuxer*>(muxerManager.getMainMuxer());
+                 auto subMuxer = dynamic_cast<TSMuxer*>(muxerManager.getSubMuxer());
