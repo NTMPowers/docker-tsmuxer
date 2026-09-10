@@ -1,6 +1,15 @@
-diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
---- a/tsMuxer/blurayHelper.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.cpp	2026-09-10 14:00:00.000000000 +0000
+--- a/tsMuxer/blurayHelper.h
++++ b/tsMuxer/blurayHelper.h
+@@ -29,6 +29,7 @@
+     bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
+                         const std::vector<double>& customChapters, DiskType dt, int mplsOffset,
+                         bool isMvcBaseViewR) const;
++    void copyMetaDirectory(const std::string& metaDir) const;
+ 
+     [[nodiscard]] std::string m2tsFileName(int num) const;
+     [[nodiscard]] std::string ssifFileName(int num) const;
+--- a/tsMuxer/blurayHelper.cpp
++++ b/tsMuxer/blurayHelper.cpp
 @@ -3,6 +3,7 @@
  #include <memory>
  
@@ -9,7 +18,7 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
  #include <fs/systemlog.h>
  #include <array>
  
-@@ -744,3 +745,76 @@
+@@ -744,3 +745,71 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
@@ -26,9 +35,8 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +
 +    std::string dirPath = metaDir;
 +    char sep = getDirSeparator();
-+    if (!dirPath.empty() && dirPath.back() != sep && dirPath.back() != '/') {
++    if (!dirPath.empty() && dirPath.back() != sep && dirPath.back() != '/')
 +        dirPath += sep;
-+    }
 +
 +    std::vector<std::string> files;
 +    findFilesRecursive(dirPath, "*", &files);
@@ -69,9 +77,9 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +        inFile.close();
 +
 +        std::string relativePath = filePath;
-+        if (filePath.length() >= dirPath.length()) {
++        if (filePath.length() >= dirPath.length())
 +            relativePath = filePath.substr(dirPath.length());
-+        }
++        
 +        std::string isoPath = "BDMV/META/" + relativePath;
 +
 +        LTRACE(LT_INFO, 2, "copyMetaDirectory: Writing " << filePath << " to " << isoPath);
@@ -90,20 +98,8 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +        delete[] buffer;
 +    }
 +}
-diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
---- a/tsMuxer/blurayHelper.h	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.h	2026-09-10 14:00:00.000000000 +0000
-@@ -29,6 +29,7 @@
-     bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
-                         const std::vector<double>& customChapters, DiskType dt, int mplsOffset,
-                         bool isMvcBaseViewR) const;
-+    void copyMetaDirectory(const std::string& metaDir) const;
- 
-     [[nodiscard]] std::string m2tsFileName(int num) const;
-     [[nodiscard]] std::string ssifFileName(int num) const;
-diff -u -r a/tsMuxer/main.cpp b/tsMuxer/main.cpp
---- a/tsMuxer/main.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/main.cpp	2026-09-10 14:00:00.000000000 +0000
+--- a/tsMuxer/main.cpp
++++ b/tsMuxer/main.cpp
 @@ -47,7 +47,7 @@
      }
  DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
@@ -144,3 +140,4 @@ diff -u -r a/tsMuxer/main.cpp b/tsMuxer/main.cpp
 +                blurayHelper.copyMetaDirectory(metaDir);
                  auto mainMuxer = dynamic_cast<TSMuxer*>(muxerManager.getMainMuxer());
                  auto subMuxer = dynamic_cast<TSMuxer*>(muxerManager.getSubMuxer());
+ 
