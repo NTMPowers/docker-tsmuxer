@@ -1,6 +1,6 @@
 diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 --- a/tsMuxer/blurayHelper.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.cpp	2026-09-10 11:30:01.867372252 +0000
++++ b/tsMuxer/blurayHelper.cpp	2026-09-10 11:38:37.795538027 +0000
 @@ -3,6 +3,7 @@
  #include <memory>
  
@@ -26,15 +26,14 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +    }
 +
 +    std::vector<std::string> files;
-+    if (!findFiles(dirPath, "*", &files, false))
++    if (!findFilesRecursive(dirPath, "*", &files))
 +    {
 +        LTRACE(LT_WARN, 2, "Warning: Could not read META directory: " << dirPath);
 +        return;
 +    }
 +
-+    for (const auto& fileName : files)
++    for (const auto& filePath : files)
 +    {
-+        std::string filePath = dirPath + fileName;
 +        File inFile;
 +        if (!inFile.open(filePath.c_str(), File::ofRead))
 +        {
@@ -59,6 +58,7 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +        }
 +        inFile.close();
 +
++        std::string fileName = filePath.substr(filePath.find_last_of("/\\") + 1);
 +        std::string isoPath = "BDMV/META/" + fileName;
 +        ISOFile* isoFile = m_isoWriter->createFile();
 +        if (isoFile->open(isoPath.c_str(), File::ofWrite))
@@ -76,7 +76,7 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +}
 diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
 --- a/tsMuxer/blurayHelper.h	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.h	2026-09-10 11:29:46.043759429 +0000
++++ b/tsMuxer/blurayHelper.h	2026-09-10 11:38:37.795538027 +0000
 @@ -29,6 +29,7 @@
      bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
                          const std::vector<double>& customChapters, DiskType dt, int mplsOffset,
@@ -87,7 +87,7 @@ diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
      [[nodiscard]] std::string ssifFileName(int num) const;
 diff -u -r a/tsMuxer/main.cpp b/tsMuxer/main.cpp
 --- a/tsMuxer/main.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/main.cpp	2026-09-10 11:30:19.945070752 +0000
++++ b/tsMuxer/main.cpp	2026-09-10 11:38:37.796538027 +0000
 @@ -47,7 +47,7 @@
      }
  DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
@@ -114,7 +114,7 @@ diff -u -r a/tsMuxer/main.cpp b/tsMuxer/main.cpp
          vector<double> customChapterList;
          bool stereoMode = false;
          string isoDiskLabel;
-+        string metaDir;
++        string metaDir = "/iso/BDMV/META";
          DiskType dt = checkBluRayMux(argv[1], autoChapterLen, customChapterList, firstMplsOffset, firstM2tsOffset,
 -                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel);
 +                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel, metaDir);
