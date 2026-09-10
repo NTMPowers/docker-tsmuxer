@@ -8,10 +8,10 @@
 ARG DOCKER_IMAGE_VERSION=
 
 # Define software versions.
-ARG TSMUXER_VERSION=2.7.0
+ARG TSMUXER_VERSION=2.18.14
 
-# Define software download URLs.
-ARG TSMUXER_URL=https://github.com/justdan96/tsMuxer/archive/refs/tags/${TSMUXER_VERSION}.tar.gz
+# Define software download URLs (note the 'v' prefix in teaching-droid tags).
+ARG TSMUXER_URL=https://github.com/teaching-droid/tsMuxer/archive/refs/tags/v${TSMUXER_VERSION}.tar.gz
 
 # Get Dockerfile cross-compilation helpers.
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
