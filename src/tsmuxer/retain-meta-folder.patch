@@ -1,4 +1,13 @@
-diff --git a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
+--- a/tsMuxer/blurayHelper.h
++++ b/tsMuxer/blurayHelper.h
+@@ -42,6 +42,7 @@
+     bool createCLPIFile(TSMuxer* muxer, int clpiNum, bool doLog) const;
+     bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
+                         const std::vector<double>& customChapters, DiskType dt, int mplsOffset, bool isMvcBaseViewR) const;
++    void copyMetaDirectory(const std::string& metaDir) const;
+ 
+     std::string m2tsFileName(int num) const;
+     std::string ssifFileName(int num) const;
 --- a/tsMuxer/blurayHelper.cpp
 +++ b/tsMuxer/blurayHelper.cpp
 @@ -1,6 +1,7 @@
@@ -9,7 +18,7 @@ diff --git a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
  #include <fs/systemlog.h>
  #include <array>
  
-@@ -520,3 +521,49 @@ void BlurayHelper::setVolumeLabel(const std::string& label) const
+@@ -518,3 +519,49 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
@@ -74,21 +83,9 @@ diff --git a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +        delete[] buffer;
 +    }
 +}
-diff --git a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
---- a/tsMuxer/blurayHelper.h
-+++ b/tsMuxer/blurayHelper.h
-@@ -45,6 +45,7 @@ public:
-     bool createCLPIFile(TSMuxer* muxer, int clpiNum, bool doLog) const;
-     bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
-                         const std::vector<double>& customChapters, DiskType dt, int mplsOffset, bool isMvcBaseViewR) const;
-+    void copyMetaDirectory(const std::string& metaDir) const;
- 
-     std::string m2tsFileName(int num) const;
-     std::string ssifFileName(int num) const;
-diff --git a/tsMuxer/main.cpp b/tsMuxer/main.cpp
 --- a/tsMuxer/main.cpp
 +++ b/tsMuxer/main.cpp
-@@ -49,8 +49,8 @@ SingleFileMuxerFactory singleFileMuxerFactory;
+@@ -49,8 +49,8 @@
          }                                \
      }
  DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
@@ -99,7 +96,7 @@ diff --git a/tsMuxer/main.cpp b/tsMuxer/main.cpp
  {
      autoChapterLen = 0;
      stereoMode = false;
-@@ -84,6 +84,10 @@ DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<do
+@@ -84,6 +84,10 @@
                  else if (paramPair[0] == "--label")
                  {
                      isoDiskLabel = paramPair[1];
@@ -110,7 +107,7 @@ diff --git a/tsMuxer/main.cpp b/tsMuxer/main.cpp
                  }
              }
  
-@@ -390,10 +394,11 @@ int main(int argc, char** argv)
+@@ -390,10 +394,11 @@
          int autoChapterLen = 0;
          vector<double> customChapterList;
          bool stereoMode = false;
@@ -122,7 +119,7 @@ diff --git a/tsMuxer/main.cpp b/tsMuxer/main.cpp
          std::string fileExt2 = unquoteStr(fileExt);
          bool muxMode =
              fileExt2 == "M2TS" || fileExt2 == "TS" || fileExt2 == "SSIF" || fileExt2 == "ISO" || dt != DiskType::NONE;
-@@ -423,6 +428,7 @@ int main(int argc, char** argv)
+@@ -423,6 +428,7 @@
              if (dt != DiskType::NONE)
              {
                  blurayHelper.writeBluRayFiles(muxerManager, insertBlankPL, firstMplsOffset, blankNum, stereoMode);
