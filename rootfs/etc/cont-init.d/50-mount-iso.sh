@@ -14,13 +14,13 @@ if [ -n "${ISO_NAME:-}" ]; then
         mount -t udf,iso9660 -o ro,loop "$ISO_PATH" /iso
         echo "Successfully mounted to /iso"
 
-        # Inject file:///iso into QtProject.conf shortcuts if not already present
+        # Inject file:///iso specifically into the shortcuts= line
         CONF="/config/xdg/config/QtProject.conf"
         mkdir -p "$(dirname "$CONF")"
         if [ -f "$CONF" ]; then
-            if grep -q "shortcuts=" "$CONF"; then
-                if ! grep -q "file:///iso" "$CONF"; then
-                    sed -i 's|shortcuts=.*|&, file:///iso|' "$CONF"
+            if grep -q '^shortcuts=' "$CONF"; then
+                if ! grep -E -q '^shortcuts=.*file:///iso' "$CONF"; then
+                    sed -i 's|^shortcuts=.*|&, file:///iso|' "$CONF"
                 fi
             else
                 printf "\n[FileDialog]\nshortcuts=file:, file:///storage, file:///iso\n" >> "$CONF"
