@@ -134,4 +134,19 @@
 +                blurayHelper.copyMetaDirectory(metaDir);
                  auto mainMuxer = dynamic_cast<TSMuxer*>(muxerManager.getMainMuxer());
                  auto subMuxer = dynamic_cast<TSMuxer*>(muxerManager.getSubMuxer());
-                 
+--- a/tsMuxerGUI/tsmuxerwindow.cpp
++++ b/tsMuxerGUI/tsmuxerwindow.cpp
+@@ -4525,4 +4525,12 @@
+     }
+     else
+     {
++        if (ui->radioButtonBluRayISO->isChecked())
++            mSaveDialogFilter = ISO_SAVE_DIALOG_FILTER();
++        else if (ui->radioButtonMKV->isChecked())
++            mSaveDialogFilter = MKV_SAVE_DIALOG_FILTER();
++        else if (ui->radioButtonTS->isChecked())
++            mSaveDialogFilter = TS_SAVE_DIALOG_FILTER();
++        else
++            mSaveDialogFilter = M2TS_SAVE_DIALOG_FILTER();
+         auto fileName = unquoteStr(ui->outFileName->text());
+         
