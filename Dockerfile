@@ -10,26 +10,29 @@ ARG DOCKER_IMAGE_VERSION=
 # Define software versions.
 ARG TSMUXER_VERSION=2.18.14
 
-# Define software download URLs (note the 'v' prefix in teaching-droid tags).
+# Define software download URLs.
 ARG TSMUXER_URL=https://github.com/teaching-droid/tsMuxer/archive/refs/tags/v${TSMUXER_VERSION}.tar.gz
 
 # Get Dockerfile cross-compilation helpers.
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
 # Build tsMuxeR.
-FROM --platform=$BUILDPLATFORM alpine:3.20 AS tsmuxer
+FROM --platform=$BUILDPLATFORM alpine:3.21 AS tsmuxer
 ARG TARGETPLATFORM
 ARG TSMUXER_VERSION
 ARG TSMUXER_URL
+
 COPY --from=xx / /
 COPY src/tsmuxer /build
+
 RUN /build/build.sh "$TSMUXER_VERSION" "$TSMUXER_URL"
+
 RUN xx-verify \
     /tmp/tsmuxer-install/usr/bin/tsmuxer \
     /tmp/tsmuxer-install/usr/bin/tsMuxerGUI
 
 # Pull base image.
-FROM jlesage/baseimage-gui:alpine-3.20-v4.13.2
+FROM jlesage/baseimage-gui:alpine-3.21-v4.13.2
 
 ARG TSMUXER_VERSION
 ARG DOCKER_IMAGE_VERSION
@@ -42,6 +45,7 @@ RUN add-pkg \
       qt6-qtbase-x11 \
       qt6-qtmultimedia \
       adwaita-qt6 \
+      # A font is needed.
       font-croscore
 
 # Generate and install favicons.
