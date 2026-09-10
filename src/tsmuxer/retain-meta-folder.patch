@@ -1,6 +1,6 @@
 diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 --- a/tsMuxer/blurayHelper.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.cpp	2026-09-10 12:00:00.000000000 +0000
++++ b/tsMuxer/blurayHelper.cpp	2026-09-10 14:00:00.000000000 +0000
 @@ -3,6 +3,7 @@
  #include <memory>
  
@@ -9,7 +9,7 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
  #include <fs/systemlog.h>
  #include <array>
  
-@@ -744,3 +745,88 @@
+@@ -744,3 +745,76 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
@@ -18,16 +18,15 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +{
 +    LTRACE(LT_INFO, 2, "=== copyMetaDirectory CALLED with: " << metaDir << " ===");
 +
-+    if (metaDir.empty())
++    if (metaDir.empty() || !m_isoWriter)
 +    {
-+        LTRACE(LT_WARN, 2, "copyMetaDirectory: metaDir is empty, skipping.");
++        LTRACE(LT_WARN, 2, "copyMetaDirectory: metaDir is empty or not ISO mode, skipping.");
 +        return;
 +    }
 +
 +    std::string dirPath = metaDir;
 +    char sep = getDirSeparator();
-+    char alt_sep = (sep == '/') ? 92 : '/'; // 92 is ASCII for backslash, avoids patch escaping issues
-+    if (!dirPath.empty() && dirPath.back() != sep && dirPath.back() != alt_sep) {
++    if (!dirPath.empty() && dirPath.back() != sep && dirPath.back() != '/') {
 +        dirPath += sep;
 +    }
 +
@@ -73,52 +72,27 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +        if (filePath.length() >= dirPath.length()) {
 +            relativePath = filePath.substr(dirPath.length());
 +        }
-+        for (char& c : relativePath) {
-+            if (c == alt_sep) c = '/';
-+        }
 +        std::string isoPath = "BDMV/META/" + relativePath;
 +
 +        LTRACE(LT_INFO, 2, "copyMetaDirectory: Writing " << filePath << " to " << isoPath);
 +
-+        if (m_isoWriter)
++        ISOFile* isoFile = m_isoWriter->createFile();
++        if (isoFile->open(isoPath.c_str(), File::ofWrite))
 +        {
-+            auto* outFileStream = m_isoWriter->createFile();
-+            if (outFileStream->open(isoPath.c_str(), File::ofWrite))
-+            {
-+                outFileStream->write(buffer, static_cast<uint32_t>(fileSize));
-+                outFileStream->close();
-+            }
-+            else
-+            {
-+                LTRACE(LT_WARN, 2, "copyMetaDirectory: Could not create ISO file: " << isoPath);
-+            }
-+            delete outFileStream;
++            isoFile->write(buffer, static_cast<uint32_t>(fileSize));
++            isoFile->close();
 +        }
 +        else
 +        {
-+            std::string outFilePath = m_dstPath + isoPath;
-+            std::string seps = "/";
-+            seps += sep;
-+            std::string outDir = outFilePath.substr(0, outFilePath.find_last_of(seps));
-+            createDir(outDir, true);
-+            
-+            File outFile;
-+            if (outFile.open(outFilePath.c_str(), File::ofWrite))
-+            {
-+                outFile.write(buffer, static_cast<int32_t>(fileSize));
-+                outFile.close();
-+            }
-+            else
-+            {
-+                LTRACE(LT_WARN, 2, "copyMetaDirectory: Could not create folder file: " << outFilePath);
-+            }
++            LTRACE(LT_WARN, 2, "copyMetaDirectory: Could not create ISO file: " << isoPath);
 +        }
++        delete isoFile;
 +        delete[] buffer;
 +    }
 +}
 diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
 --- a/tsMuxer/blurayHelper.h	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.h	2026-09-10 12:00:00.000000000 +0000
++++ b/tsMuxer/blurayHelper.h	2026-09-10 14:00:00.000000000 +0000
 @@ -29,6 +29,7 @@
      bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
                          const std::vector<double>& customChapters, DiskType dt, int mplsOffset,
@@ -129,7 +103,7 @@ diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
      [[nodiscard]] std::string ssifFileName(int num) const;
 diff -u -r a/tsMuxer/main.cpp b/tsMuxer/main.cpp
 --- a/tsMuxer/main.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/main.cpp	2026-09-10 12:00:00.000000000 +0000
++++ b/tsMuxer/main.cpp	2026-09-10 14:00:00.000000000 +0000
 @@ -47,7 +47,7 @@
      }
  DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
