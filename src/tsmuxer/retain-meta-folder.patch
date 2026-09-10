@@ -23,7 +23,7 @@
  }
 +
 +void BlurayHelper::copyMetaDirectory(const std::string& metaDir) const {
-+    LTRACE(LT_INFO, 2, copyMetaDirectory called with: '" << metaDir << "' ===");
++    LTRACE(LT_INFO, 2, "=== copyMetaDirectory CALLED with: '" << metaDir << "' ===");
 +    if (metaDir.empty() || !m_isoWriter) {
 +        LTRACE(LT_WARN, 2, "copyMetaDirectory: metaDir is empty or not ISO mode, skipping.");
 +        return;
@@ -114,3 +114,4 @@
 +                blurayHelper.copyMetaDirectory(metaDir);
                  auto mainMuxer = dynamic_cast<TSMuxer*>(muxerManager.getMainMuxer());
                  auto subMuxer = dynamic_cast<TSMuxer*>(muxerManager.getSubMuxer());
+                 
