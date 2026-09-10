@@ -1,6 +1,7 @@
 --- a/tsMuxer/blurayHelper.h
 +++ b/tsMuxer/blurayHelper.h
-@@ -29,6 +29,7 @@
+@@ -27,8 +27,9 @@
+     bool createCLPIFile(TSMuxer* muxer, int clpiNum, bool doLog) const;
      bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
                          const std::vector<double>& customChapters, DiskType dt, int mplsOffset,
                          bool isMvcBaseViewR) const;
@@ -18,7 +19,8 @@
  #include <fs/systemlog.h>
  #include <array>
  
-@@ -744,3 +745,58 @@
+@@ -743,4 +744,59 @@
+ 
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
@@ -78,7 +80,7 @@
 +}
 --- a/tsMuxer/main.cpp
 +++ b/tsMuxer/main.cpp
-@@ -47,7 +47,7 @@
+@@ -46,8 +46,8 @@
      }
  DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
                          int& firstMplsOffset, int& firstM2tsOffset, bool& insertBlankPL, int& blankNum,
@@ -87,7 +89,8 @@
  {
      autoChapterLen = 0;
      stereoMode = false;
-@@ -114,6 +114,11 @@
+@@ -113,6 +113,12 @@
+                     if (paramPair.size() < 2)
                          THROW(ERR_COMMON, "Missing value for " << paramPair[0])
                      isoDiskLabel = paramPair[1];
                  }
@@ -99,7 +102,8 @@
              }
  
              if (str.find("--blu-ray-v3") != string::npos)
-@@ -2062,8 +2067,9 @@
+@@ -2061,9 +2061,10 @@
+         int autoChapterLen = 0;
          vector<double> customChapterList;
          bool stereoMode = false;
          string isoDiskLabel;
@@ -110,7 +114,7 @@
          std::string fileExt2 = unquoteStr(fileExt);
          bool mkvMode = fileExt2 == "MKV" || fileExt2 == "MKA";
          bool muxMode =
-@@ -2166,6 +2172,7 @@
+@@ -2165,6 +2166,7 @@
              if (dt != DiskType::NONE)
              {
                  blurayHelper.writeBluRayFiles(muxerManager, insertBlankPL, firstMplsOffset, blankNum, stereoMode);
