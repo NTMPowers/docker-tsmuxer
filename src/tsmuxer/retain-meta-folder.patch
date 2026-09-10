@@ -1,24 +1,15 @@
---- a/tsMuxer/blurayHelper.h
-+++ b/tsMuxer/blurayHelper.h
-@@ -42,6 +42,7 @@
-     bool createCLPIFile(TSMuxer* muxer, int clpiNum, bool doLog) const;
-     bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
-                         const std::vector<double>& customChapters, DiskType dt, int mplsOffset, bool isMvcBaseViewR) const;
-+    void copyMetaDirectory(const std::string& metaDir) const;
- 
-     std::string m2tsFileName(int num) const;
-     std::string ssifFileName(int num) const;
---- a/tsMuxer/blurayHelper.cpp
-+++ b/tsMuxer/blurayHelper.cpp
-@@ -1,6 +1,7 @@
- #include "blurayHelper.h"
+diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
+--- a/tsMuxer/blurayHelper.cpp	2026-09-07 13:00:42.000000000 +0000
++++ b/tsMuxer/blurayHelper.cpp	2026-09-10 11:30:01.867372252 +0000
+@@ -3,6 +3,7 @@
+ #include <memory>
  
  #include <fs/directory.h>
 +#include <fs/file.h>
  #include <fs/systemlog.h>
  #include <array>
  
-@@ -518,3 +519,49 @@
+@@ -744,3 +745,64 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
@@ -83,32 +74,43 @@
 +        delete[] buffer;
 +    }
 +}
---- a/tsMuxer/main.cpp
-+++ b/tsMuxer/main.cpp
-@@ -49,8 +49,8 @@
-         }                                \
+diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
+--- a/tsMuxer/blurayHelper.h	2026-09-07 13:00:42.000000000 +0000
++++ b/tsMuxer/blurayHelper.h	2026-09-10 11:29:46.043759429 +0000
+@@ -29,6 +29,7 @@
+     bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
+                         const std::vector<double>& customChapters, DiskType dt, int mplsOffset,
+                         bool isMvcBaseViewR) const;
++    void copyMetaDirectory(const std::string& metaDir) const;
+ 
+     [[nodiscard]] std::string m2tsFileName(int num) const;
+     [[nodiscard]] std::string ssifFileName(int num) const;
+diff -u -r a/tsMuxer/main.cpp b/tsMuxer/main.cpp
+--- a/tsMuxer/main.cpp	2026-09-07 13:00:42.000000000 +0000
++++ b/tsMuxer/main.cpp	2026-09-10 11:30:19.945070752 +0000
+@@ -47,7 +47,7 @@
      }
  DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
--                        int& firstMplsOffset, int& firstM2tsOffset, bool& insertBlankPL, int& blankNum,
+                         int& firstMplsOffset, int& firstM2tsOffset, bool& insertBlankPL, int& blankNum,
 -                        bool& stereoMode, std::string& isoDiskLabel)
-+                        int& firstMplsOffset, int& firstM2tsOffset, bool& insertBlankPL, int& blankNum,
 +                        bool& stereoMode, std::string& isoDiskLabel, std::string& metaDir)
  {
      autoChapterLen = 0;
      stereoMode = false;
-@@ -84,6 +84,10 @@
-                 else if (paramPair[0] == "--label")
-                 {
+@@ -114,6 +114,12 @@
+                         THROW(ERR_COMMON, "Missing value for " << paramPair[0])
                      isoDiskLabel = paramPair[1];
-+                }
+                 }
 +                else if (paramPair[0] == "--meta-dir")
 +                {
++                    if (paramPair.size() < 2)
++                        THROW(ERR_COMMON, "Missing value for " << paramPair[0])
 +                    metaDir = paramPair[1];
-                 }
++                }
              }
  
-@@ -390,10 +394,11 @@
-         int autoChapterLen = 0;
+             if (str.find("--blu-ray-v3") != string::npos)
+@@ -2062,8 +2068,9 @@
          vector<double> customChapterList;
          bool stereoMode = false;
          string isoDiskLabel;
@@ -117,12 +119,13 @@
 -                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel);
 +                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel, metaDir);
          std::string fileExt2 = unquoteStr(fileExt);
+         bool mkvMode = fileExt2 == "MKV" || fileExt2 == "MKA";
          bool muxMode =
-             fileExt2 == "M2TS" || fileExt2 == "TS" || fileExt2 == "SSIF" || fileExt2 == "ISO" || dt != DiskType::NONE;
-@@ -423,6 +428,7 @@
+@@ -2166,6 +2173,7 @@
              if (dt != DiskType::NONE)
              {
                  blurayHelper.writeBluRayFiles(muxerManager, insertBlankPL, firstMplsOffset, blankNum, stereoMode);
 +                blurayHelper.copyMetaDirectory(metaDir);
                  auto mainMuxer = dynamic_cast<TSMuxer*>(muxerManager.getMainMuxer());
                  auto subMuxer = dynamic_cast<TSMuxer*>(muxerManager.getSubMuxer());
+ 
