@@ -42,8 +42,8 @@ apk --no-cache add \
     pkgconf \
     imagemagick \
     qtchooser \
-    qt5-qtbase-dev \
-    qt5-qttools-dev \
+    qt6-qtbase-dev \
+    qt6-qttools-dev \
 
 xx-apk --no-cache --no-scripts add \
     musl-dev \
@@ -51,17 +51,17 @@ xx-apk --no-cache --no-scripts add \
     g++ \
     zlib-dev \
     freetype-dev \
-    qt5-qtbase-dev \
-    qt5-qttools-dev \
-    qt5-qtmultimedia-dev \
+    qt6-qtbase-dev \
+    qt6-qttools-dev \
+    qt6-qtmultimedia-dev \
 
 # Make sure tools used to generate code are the ones from the host.
 if [ "$(xx-info sysroot)" != "/" ]
 then
-    ln -sf /usr/bin/moc $(xx-info sysroot)usr/lib/qt5/bin/moc
-    ln -sf /usr/bin/uic $(xx-info sysroot)usr/lib/qt5/bin/uic
-    ln -sf /usr/bin/rcc $(xx-info sysroot)usr/lib/qt5/bin/rcc
-    ln -sf /usr/bin/lrelease $(xx-info sysroot)usr/lib/qt5/bin/lrelease
+    ln -sf /usr/bin/moc $(xx-info sysroot)usr/lib/qt6/bin/moc
+    ln -sf /usr/bin/uic $(xx-info sysroot)usr/lib/qt6/bin/uic
+    ln -sf /usr/bin/rcc $(xx-info sysroot)usr/lib/qt6/bin/rcc
+    ln -sf /usr/bin/lrelease $(xx-info sysroot)usr/lib/qt6/bin/lrelease
 fi
 
 #
@@ -77,7 +77,7 @@ curl -# -L -f ${TSMUXER_URL} | tar xz --strip 1 -C /tmp/tsmuxer
 #
 
 # Set the version from commit hash.
-GIT_HASH="$(git ls-remote -t https://github.com/justdan96/tsMuxer.git | grep "$TSMUXER_VERSION" | awk '{print $1}' | head -c 8)"
+GIT_HASH="$(git ls-remote -t https://github.com/teaching-droid/tsMuxer.git | grep "$TSMUXER_VERSION" | awk '{print $1}' | head -c 8)"
 sed -i "s/\${TSMUXER_VERSION}/git-$GIT_HASH/" /tmp/tsmuxer/CMakeLists.txt
 
 log "Configuring tsMuxeR..."
