@@ -17,7 +17,7 @@
 +#include <fs/file.h>
  #include <fs/systemlog.h>
  #include <array>
-@@ -744,3 +745,91 @@
+@@ -744,3 +745,86 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
