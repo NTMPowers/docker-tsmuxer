@@ -1,6 +1,6 @@
 diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 --- a/tsMuxer/blurayHelper.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.cpp	2026-09-10 11:38:37.795538027 +0000
++++ b/tsMuxer/blurayHelper.cpp	2026-09-10 12:00:00.000000000 +0000
 @@ -3,6 +3,7 @@
  #include <memory>
  
@@ -9,15 +9,20 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
  #include <fs/systemlog.h>
  #include <array>
  
-@@ -744,3 +745,64 @@
+@@ -744,3 +745,86 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
 +
 +void BlurayHelper::copyMetaDirectory(const std::string& metaDir) const
 +{
-+    if (metaDir.empty() || !m_isoWriter)
++    LTRACE(LT_INFO, 2, "=== copyMetaDirectory CALLED with: " << metaDir << " ===");
++
++    if (metaDir.empty())
++    {
++        LTRACE(LT_WARN, 2, "copyMetaDirectory: metaDir is empty, skipping.");
 +        return;
++    }
 +
 +    std::string dirPath = metaDir;
 +    char sep = getDirSeparator();
@@ -26,24 +31,29 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +    }
 +
 +    std::vector<std::string> files;
-+    if (!findFilesRecursive(dirPath, "*", &files))
++    findFilesRecursive(dirPath, "*", &files);
++
++    if (files.empty())
 +    {
-+        LTRACE(LT_WARN, 2, "Warning: Could not read META directory: " << dirPath);
++        LTRACE(LT_WARN, 2, "copyMetaDirectory: No files found in: " << dirPath);
 +        return;
 +    }
++
++    LTRACE(LT_INFO, 2, "copyMetaDirectory: Found " << files.size() << " files to copy.");
 +
 +    for (const auto& filePath : files)
 +    {
 +        File inFile;
 +        if (!inFile.open(filePath.c_str(), File::ofRead))
 +        {
-+            LTRACE(LT_WARN, 2, "Warning: Could not open META file: " << filePath);
++            LTRACE(LT_WARN, 2, "copyMetaDirectory: Could not open META file: " << filePath);
 +            continue;
 +        }
 +
 +        int64_t fileSize = inFile.size();
 +        if (fileSize <= 0)
 +        {
++            LTRACE(LT_WARN, 2, "copyMetaDirectory: File size <= 0 for: " << filePath);
 +            inFile.close();
 +            continue;
 +        }
@@ -51,32 +61,61 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +        auto buffer = new uint8_t[static_cast<size_t>(fileSize)];
 +        if (inFile.read(buffer, static_cast<int32_t>(fileSize)) != fileSize)
 +        {
-+            LTRACE(LT_WARN, 2, "Warning: Could not read META file: " << filePath);
++            LTRACE(LT_WARN, 2, "copyMetaDirectory: Could not read META file: " << filePath);
 +            delete[] buffer;
 +            inFile.close();
 +            continue;
 +        }
 +        inFile.close();
 +
-+        std::string fileName = filePath.substr(filePath.find_last_of("/\\") + 1);
-+        std::string isoPath = "BDMV/META/" + fileName;
-+        ISOFile* isoFile = m_isoWriter->createFile();
-+        if (isoFile->open(isoPath.c_str(), File::ofWrite))
++        std::string relativePath = filePath;
++        if (filePath.length() >= dirPath.length()) {
++            relativePath = filePath.substr(dirPath.length());
++        }
++        for (char& c : relativePath) {
++            if (c == '\\') c = '/';
++        }
++        std::string isoPath = "BDMV/META/" + relativePath;
++
++        LTRACE(LT_INFO, 2, "copyMetaDirectory: Writing " << filePath << " to " << isoPath);
++
++        if (m_isoWriter)
 +        {
-+            isoFile->write(buffer, static_cast<uint32_t>(fileSize));
-+            isoFile->close();
++            ISOFile* isoFile = m_isoWriter->createFile();
++            if (isoFile->open(isoPath.c_str(), File::ofWrite))
++            {
++                isoFile->write(buffer, static_cast<uint32_t>(fileSize));
++                isoFile->close();
++            }
++            else
++            {
++                LTRACE(LT_WARN, 2, "copyMetaDirectory: Could not create ISO file: " << isoPath);
++            }
++            delete isoFile;
 +        }
 +        else
 +        {
-+            LTRACE(LT_WARN, 2, "Warning: Could not create ISO file: " << isoPath);
++            std::string outFilePath = m_dstPath + isoPath;
++            std::string outDir = outFilePath.substr(0, outFilePath.find_last_of("/\\"));
++            createDir(outDir, true);
++            
++            File outFile;
++            if (outFile.open(outFilePath.c_str(), File::ofWrite))
++            {
++                outFile.write(buffer, static_cast<int32_t>(fileSize));
++                outFile.close();
++            }
++            else
++            {
++                LTRACE(LT_WARN, 2, "copyMetaDirectory: Could not create folder file: " << outFilePath);
++            }
 +        }
-+        delete isoFile;
 +        delete[] buffer;
 +    }
 +}
 diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
 --- a/tsMuxer/blurayHelper.h	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.h	2026-09-10 11:38:37.795538027 +0000
++++ b/tsMuxer/blurayHelper.h	2026-09-10 12:00:00.000000000 +0000
 @@ -29,6 +29,7 @@
      bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
                          const std::vector<double>& customChapters, DiskType dt, int mplsOffset,
@@ -87,7 +126,7 @@ diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
      [[nodiscard]] std::string ssifFileName(int num) const;
 diff -u -r a/tsMuxer/main.cpp b/tsMuxer/main.cpp
 --- a/tsMuxer/main.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/main.cpp	2026-09-10 11:38:37.796538027 +0000
++++ b/tsMuxer/main.cpp	2026-09-10 12:00:00.000000000 +0000
 @@ -47,7 +47,7 @@
      }
  DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
@@ -128,4 +167,3 @@ diff -u -r a/tsMuxer/main.cpp b/tsMuxer/main.cpp
 +                blurayHelper.copyMetaDirectory(metaDir);
                  auto mainMuxer = dynamic_cast<TSMuxer*>(muxerManager.getMainMuxer());
                  auto subMuxer = dynamic_cast<TSMuxer*>(muxerManager.getSubMuxer());
- 
