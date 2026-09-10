@@ -17,7 +17,7 @@
 +#include <fs/file.h>
  #include <fs/systemlog.h>
  #include <array>
-@@ -744,3 +745,68 @@
+@@ -744,3 +745,67 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
@@ -33,22 +33,22 @@
 +    if (!dirPath.empty() && dirPath.back() != sep && dirPath.back() != '/')
 +        dirPath += sep;
 +    LTRACE(LT_INFO, 2, "copyMetaDirectory: Normalized path: '" << dirPath << "'");
-+    
++
 +    if (!fileExists(dirPath)) {
 +        LTRACE(LT_WARN, 2, "copyMetaDirectory: Directory does not exist: " << dirPath);
 +        return;
 +    }
 +    LTRACE(LT_INFO, 2, "copyMetaDirectory: Directory exists, scanning...");
-+    
++
 +    std::vector<std::string> files;
 +    bool result = findFilesRecursive(dirPath, "*", &files);
 +    LTRACE(LT_INFO, 2, "copyMetaDirectory: findFilesRecursive returned: " << result << ", found " << files.size() << " files");
-+    
++
 +    if (files.empty()) {
 +        LTRACE(LT_WARN, 2, "copyMetaDirectory: No files found in: " << dirPath);
 +        return;
 +    }
-+    
++
 +    for (const auto& filePath : files) {
 +        File inFile;
 +        if (!inFile.open(filePath.c_str(), File::ofRead)) {
