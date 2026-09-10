@@ -39,11 +39,10 @@ WORKDIR /tmp
 
 # Install dependencies.
 RUN add-pkg \
-        qt5-qtbase-x11 \
-        qt5-qtmultimedia \
-        adwaita-qt \
-        # A font is needed.
-        font-croscore
+      qt6-qtbase-x11 \
+      qt6-qtmultimedia \
+      adwaita-qt6 \
+      font-croscore
 
 # Generate and install favicons.
 RUN \
