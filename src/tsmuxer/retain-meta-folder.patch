@@ -17,10 +17,36 @@
 +#include <fs/file.h>
  #include <fs/systemlog.h>
  #include <array>
-@@ -744,3 +745,67 @@
+@@ -744,3 +745,91 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
++
++#if !defined(_WIN32)
++#include <dirent.h>
++#include <sys/stat.h>
++static void listFilesPosix(const std::string& path, std::vector<std::string>& out) {
++    DIR* dir = opendir(path.c_str());
++    if (!dir) return;
++    struct dirent* entry;
++    while ((entry = readdir(dir)) != nullptr) {
++        std::string name = entry->d_name;
++        if (name == "." || name == "..") continue;
++        std::string fullPath = path;
++        if (fullPath.back() != '/' && fullPath.back() != '\\') fullPath += "/";
++        fullPath += name;
++        struct stat st;
++        if (stat(fullPath.c_str(), &st) == 0) {
++            if (S_ISDIR(st.st_mode)) {
++                listFilesPosix(fullPath, out);
++            } else if (S_ISREG(st.st_mode)) {
++                out.push_back(fullPath);
++            }
++        }
++    }
++    closedir(dir);
++}
++#endif
 +
 +void BlurayHelper::copyMetaDirectory(const std::string& metaDir) const {
 +    LTRACE(LT_INFO, 2, "=== copyMetaDirectory CALLED with: '" << metaDir << "' ===");
@@ -34,15 +60,13 @@
 +        dirPath += sep;
 +    LTRACE(LT_INFO, 2, "copyMetaDirectory: Normalized path: '" << dirPath << "'");
 +
-+    if (!fileExists(dirPath)) {
-+        LTRACE(LT_WARN, 2, "copyMetaDirectory: Directory does not exist: " << dirPath);
-+        return;
-+    }
-+    LTRACE(LT_INFO, 2, "copyMetaDirectory: Directory exists, scanning...");
-+
 +    std::vector<std::string> files;
-+    bool result = findFilesRecursive(dirPath, "*", &files);
-+    LTRACE(LT_INFO, 2, "copyMetaDirectory: findFilesRecursive returned: " << result << ", found " << files.size() << " files");
++#if !defined(_WIN32)
++    listFilesPosix(dirPath, files);
++#else
++    findFilesRecursive(dirPath, "*", &files);
++#endif
++    LTRACE(LT_INFO, 2, "copyMetaDirectory: found " << files.size() << " files");
 +
 +    if (files.empty()) {
 +        LTRACE(LT_WARN, 2, "copyMetaDirectory: No files found in: " << dirPath);
@@ -57,13 +81,11 @@
 +        }
 +        int64_t fileSize = inFile.size();
 +        if (fileSize <= 0) {
-+            LTRACE(LT_WARN, 2, "copyMetaDirectory: File size <= 0 for: " << filePath);
 +            inFile.close();
 +            continue;
 +        }
 +        auto buffer = new uint8_t[static_cast<size_t>(fileSize)];
 +        if (inFile.read(buffer, static_cast<int32_t>(fileSize)) != fileSize) {
-+            LTRACE(LT_WARN, 2, "copyMetaDirectory: Could not read META file: " << filePath);
 +            delete[] buffer;
 +            inFile.close();
 +            continue;
@@ -72,14 +94,12 @@
 +        std::string relativePath = filePath;
 +        if (filePath.length() >= dirPath.length())
 +            relativePath = filePath.substr(dirPath.length());
-+        std::string isoPath = "BDMV/META/" + relativePath;
++        std::string isoPath = "BDMV/META/DL/" + relativePath;
 +        LTRACE(LT_INFO, 2, "copyMetaDirectory: Writing " << filePath << " to " << isoPath);
 +        ISOFile* isoFile = m_isoWriter->createFile();
 +        if (isoFile->open(isoPath.c_str(), File::ofWrite)) {
 +            isoFile->write(buffer, static_cast<uint32_t>(fileSize));
 +            isoFile->close();
-+        } else {
-+            LTRACE(LT_WARN, 2, "copyMetaDirectory: Could not create ISO file: " << isoPath);
 +        }
 +        delete isoFile;
 +        delete[] buffer;
@@ -104,7 +124,7 @@
              }
 @@ -2064,4 +2064,5 @@
          string isoDiskLabel;
-+        string metaDir = "/iso/BDMV/META";
++        string metaDir = "/iso/BDMV/META/DL";
          DiskType dt = checkBluRayMux(argv[1], autoChapterLen, customChapterList, firstMplsOffset, firstM2tsOffset,
 -                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel);
 +                                     insertBlankPL, blankNum, stereoMode, isoDiskLabel, metaDir);
@@ -114,4 +134,3 @@
 +                blurayHelper.copyMetaDirectory(metaDir);
                  auto mainMuxer = dynamic_cast<TSMuxer*>(muxerManager.getMainMuxer());
                  auto subMuxer = dynamic_cast<TSMuxer*>(muxerManager.getSubMuxer());
-                 
