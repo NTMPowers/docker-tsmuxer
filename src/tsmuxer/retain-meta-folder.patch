@@ -1,6 +1,6 @@
 diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 --- a/tsMuxer/blurayHelper.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.cpp	2026-09-10 12:00:00.000000000 +0000
++++ b/tsMuxer/blurayHelper.cpp	2026-09-10 12:30:00.000000000 +0000
 @@ -3,6 +3,7 @@
  #include <memory>
  
@@ -9,7 +9,7 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
  #include <fs/systemlog.h>
  #include <array>
  
-@@ -744,3 +745,86 @@
+@@ -744,3 +745,91 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
@@ -96,7 +96,8 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +        else
 +        {
 +            std::string outFilePath = m_dstPath + isoPath;
-+            std::string outDir = outFilePath.substr(0, outFilePath.find_last_of("/\\"));
++            size_t last_sep = outFilePath.find_last_of('/');
++            std::string outDir = (last_sep != std::string::npos) ? outFilePath.substr(0, last_sep) : m_dstPath;
 +            createDir(outDir, true);
 +            
 +            File outFile;
@@ -115,7 +116,7 @@ diff -u -r a/tsMuxer/blurayHelper.cpp b/tsMuxer/blurayHelper.cpp
 +}
 diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
 --- a/tsMuxer/blurayHelper.h	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/blurayHelper.h	2026-09-10 12:00:00.000000000 +0000
++++ b/tsMuxer/blurayHelper.h	2026-09-10 12:30:00.000000000 +0000
 @@ -29,6 +29,7 @@
      bool createMPLSFile(TSMuxer* mainMuxer, TSMuxer* subMuxer, int autoChapterLen,
                          const std::vector<double>& customChapters, DiskType dt, int mplsOffset,
@@ -126,7 +127,7 @@ diff -u -r a/tsMuxer/blurayHelper.h b/tsMuxer/blurayHelper.h
      [[nodiscard]] std::string ssifFileName(int num) const;
 diff -u -r a/tsMuxer/main.cpp b/tsMuxer/main.cpp
 --- a/tsMuxer/main.cpp	2026-09-07 13:00:42.000000000 +0000
-+++ b/tsMuxer/main.cpp	2026-09-10 12:00:00.000000000 +0000
++++ b/tsMuxer/main.cpp	2026-09-10 12:30:00.000000000 +0000
 @@ -47,7 +47,7 @@
      }
  DiskType checkBluRayMux(const char* metaFileName, int& autoChapterLen, vector<double>& customChaptersList,
