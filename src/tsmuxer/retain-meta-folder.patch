@@ -49,7 +49,7 @@
 +#endif
 +
 +void BlurayHelper::copyMetaDirectory(const std::string& metaDir) const {
-+    LTRACE(LT_INFO, 2, "=== copyMetaDirectory CALLED with: '" << metaDir << "' ===");
++    LTRACE(LT_INFO, 2, "copyMetaDirectory called with: '" << metaDir << "' ===");
 +    if (metaDir.empty() || !m_isoWriter) {
 +        LTRACE(LT_WARN, 2, "copyMetaDirectory: metaDir is empty or not ISO mode, skipping.");
 +        return;
@@ -119,7 +119,7 @@
 +                else if (paramPair[0] == "--meta-dir") {
 +                    if (paramPair.size() < 2)
 +                        THROW(ERR_COMMON, "Missing value for " << paramPair[0])
-+                    metaDir = paramPair[1];
++                    metaDir = unquoteStr(paramPair[1]);
 +                }
              }
 @@ -2064,4 +2064,5 @@
