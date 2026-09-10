@@ -17,7 +17,7 @@
 +#include <fs/file.h>
  #include <fs/systemlog.h>
  #include <array>
-@@ -744,3 +745,86 @@
+@@ -744,3 +745,87 @@
      if (m_isoWriter)
          m_isoWriter->setVolumeLabel(unquoteStr(label));
  }
@@ -134,3 +134,4 @@
 +                blurayHelper.copyMetaDirectory(metaDir);
                  auto mainMuxer = dynamic_cast<TSMuxer*>(muxerManager.getMainMuxer());
                  auto subMuxer = dynamic_cast<TSMuxer*>(muxerManager.getSubMuxer());
+                 
