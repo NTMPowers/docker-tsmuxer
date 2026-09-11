@@ -17,7 +17,7 @@
 3. **Automatic Preservation of `BDMV/META/DL` Contents in Blu-ray ISOs**:
    - Upstream tsMuxeR creates an empty `BDMV/META/DL` directory in every Blu-ray ISO it generates, discarding any source disc metadata (cover art, `bdmt_eng.xml` descriptors, etc.).
    - This fork includes a patched `BlurayHelper` that, immediately after writing the base Blu-ray structure, recursively copies every file from a configurable source directory into the `BDMV/META/DL` tree of the resulting ISO.
-   - **Default behavior**: when building a Blu-ray ISO, files under `/iso/BDMV/META/DL` of the mounted source ISO are automatically copied into `BDMV/META/DL/` of the output ISO — so cover art and disc metadata are retained without any extra steps.
+   - **Default behavior**: when building a Blu-ray ISO, files under `/iso/BDMV/META/DL` of the mounted source ISO are automatically copied into `BDMV/META/DL` of the output ISO — so cover art and disc metadata are retained without any extra steps.
    - **Customization**: the source path can be overridden per-job via the `--meta-dir` option in the first `MUXOPT` line. Paths containing spaces must be quoted.
    
    Example `MUXOPT` lines (in the tsMuxeR GUI's **Meta** tab):
