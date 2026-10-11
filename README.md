@@ -7,7 +7,7 @@
 ### What's Changed in This Fork
 
 1. **Modern tsMuxeR Upstream (`teaching-droid/tsMuxer`)**:
-   - Replaced the unmaintained `justdan96/tsMuxer` (v2.7.0) with the active **`teaching-droid/tsMuxer`** (v2.18.x).
+   - Replaced the unmaintained `justdan96/tsMuxer` with the active **`teaching-droid/tsMuxer`**.
    - Compiles with C++20 and **Qt 6** GUI (utilizing Alpine 3.21 for Qt 6.8+ compatibility).
 
 2. **Native ISO Mounting via `ISO_NAME`**:
