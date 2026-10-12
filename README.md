@@ -8,7 +8,7 @@
 
 1. **Modern tsMuxeR Upstream (`teaching-droid/tsMuxer`)**:
    - Replaced the unmaintained `justdan96/tsMuxer` with the active **`teaching-droid/tsMuxer`**.
-   - Compiles with C++20 and **Qt 6** GUI (utilizing Alpine 3.21 for Qt 6.8+ compatibility).
+   - Compiles with C++20 and **Qt 6** GUI.
 
 2. **Native ISO Mounting via `ISO_NAME`**:
    - Simply provide the filename in the `ISO_NAME` environment variable, and the container will automatically loop-mount `/storage/<your-file>.iso` to `/iso` at boot.
