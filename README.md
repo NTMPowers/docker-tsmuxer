@@ -1,6 +1,6 @@
 # tsMuxeR Docker (teaching-droid fork with native ISO mount)
 
-> **Note**: This repository is a custom fork of [jlesage/docker-tsmuxer](https://github.com/jlesage/docker-tsmuxer) modified to use the active modern [teaching-droid/tsMuxer](https://github.com/teaching-droid/tsMuxer) fork and provide native ISO mounting via environment variables.
+> **Note**: This repository is a custom fork of [jlesage/docker-tsmuxer](https://github.com/jlesage/docker-tsmuxer) modified to use the active modern [teaching-droid/tsMuxer](https://github.com/teaching-droid/tsMuxer) fork.
 
 ---
 
