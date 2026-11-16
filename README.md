@@ -10,24 +10,17 @@
    - Replaced the unmaintained `justdan96/tsMuxer` with the active **`teaching-droid/tsMuxer`**.
    - Compiles with C++20 and **Qt 6** GUI.
 
-2. **Native ISO Mounting via `ISO_NAME`**:
-   - Simply provide the filename in the `ISO_NAME` environment variable, and the container will automatically loop-mount `/storage/<your-file>.iso` to `/iso` at boot.
-   - If `ISO_NAME` is omitted or empty, the container boots normally without mounting.
+2. ~~**Native ISO Mounting via `ISO_NAME`**:~~
+   - ~~Simply provide the filename in the `ISO_NAME` environment variable, and the container will automatically loop-mount `/storage/<your-file>.iso` to `/iso` at boot.~~
+   - ~~If `ISO_NAME` is omitted or empty, the container boots normally without mounting.~~
 
-3. **Automatic Preservation of `BDMV/META/DL` Contents in Blu-ray ISOs**:
-   - Upstream tsMuxeR creates an empty `BDMV/META/DL` directory in every Blu-ray ISO it generates, discarding any source disc metadata (cover art, `bdmt_eng.xml` descriptors, etc.).
-   - This fork includes a patched `BlurayHelper` that, immediately after writing the base Blu-ray structure, recursively copies every file from a configurable source directory into the `BDMV/META/DL` tree of the resulting ISO.
-   - **Default behavior**: when building a Blu-ray ISO, files under `/iso/BDMV/META/DL` of the mounted source ISO are automatically copied into `BDMV/META/DL` of the output ISO — so cover art and disc metadata are retained without any extra steps.
-   - **Customization**: the source path can be overridden per-job via the `--meta-dir` option in the first `MUXOPT` line. Paths containing spaces must be quoted.
-   
-   Example `MUXOPT` lines (in the tsMuxeR GUI's **Meta** tab):
-   ```text
-   # Uses the default /iso/BDMV/META/DL
-   MUXOPT ...
+3. ~~**Automatic Preservation of `BDMV/META/DL` Contents in Blu-ray ISOs**:~~
+   - ~~Upstream tsMuxeR creates an empty `BDMV/META/DL` directory in every Blu-ray ISO it generates, discarding any source disc metadata (cover art, `bdmt_eng.xml` descriptors, etc.).~~
+   - ~~This fork includes a patched `BlurayHelper` that, immediately after writing the base Blu-ray structure, recursively copies every file from a configurable source directory into the `BDMV/META/DL` tree of the resulting ISO.~~
+   - ~~**Default behavior**: when building a Blu-ray ISO, files under `/iso/BDMV/META/DL` of the mounted source ISO are automatically copied into `BDMV/META/DL` of the output ISO — so cover art and disc metadata are retained without any extra steps.~~
+   - ~~**Customization**: the source path can be overridden per-job via the `--meta-dir` option in the first `MUXOPT` line. Paths containing spaces must be quoted.~~
 
-   # Override with a custom source path (quoted because of the space)
-   MUXOPT --meta-dir="/storage/Movie XXX/BDMV/META/DL" ...
-   ```
+> **Note:** Items 2 and 3 have been implemented in upstream tsMuxer version 3.1.0, so they are no longer fork-specific features.
 
 ---
 
