@@ -32,9 +32,6 @@ services:
     image: ghcr.io/ntmpowers/docker-tsmuxer:latest
     container_name: tsmuxer
     privileged: true # Required for loop mounting ISOs
-    environment:
-      # Specify any ISO filename located inside your /storage mount:
-      - ISO_NAME=movie.iso
     ports:
       - "5800:5800"
     volumes:
